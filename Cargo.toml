@@ -1,0 +1,19 @@
+[package]
+name = "tek-utils"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4.5.47", features = ["derive"] }
+embedded-graphics = "0.8.1"
+image = { version = "0.25.8", default-features = false, features = ["png"] }
+tinybmp = "0.6.0"
+visa-rs = "0.6.2"
+
+[[bin]]
+name = "tek-hardcopy"
+path = "src/bin/tek-hardcopy.rs"
+
+[[bin]]
+name = "tek-data"
+path = "src/bin/tek-data.rs"
