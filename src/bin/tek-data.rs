@@ -28,7 +28,7 @@ fn main() {
     let expr = cli.port.into();
     let rsc = rm.find_res(&expr).unwrap();
 
-    let mut instr: Instrument = rm
+    let instr: Instrument = rm
         .open(&rsc, AccessMode::NO_LOCK, TIMEOUT_INFINITE)
         .unwrap();
 
@@ -38,19 +38,19 @@ fn main() {
         ))
         .unwrap();
 
-    let result = tek_utils::query_str(&mut instr, "*IDN?").unwrap();
+    let result = tek_utils::query_str(&instr, "*IDN?").unwrap();
 
     print!("Instrument: {}", result);
 
     tek_utils::write(
-        &mut instr,
+        &instr,
         &format!("DATA:SOURCE {}", cli.channels.join(",")),
     )
     .unwrap();
-    tek_utils::write(&mut instr, "DATA:ENCDG ASCII").unwrap();
-    tek_utils::write(&mut instr, "DATA:START").unwrap();
+    tek_utils::write(&instr, "DATA:ENCDG ASCII").unwrap();
+    tek_utils::write(&instr, "DATA:START").unwrap();
 
-    let bin = tek_utils::query_bin(&mut instr, "WAVFrm?").unwrap();
+    let bin = tek_utils::query_bin(&instr, "WAVFrm?").unwrap();
 
     let mut file = std::fs::File::create(&cli.output).unwrap();
     file.write_all(&bin).unwrap();

@@ -45,9 +45,7 @@ fn parse_broken_bmp(bin: &[u8]) -> Result<DynamicImage, Box<dyn std::error::Erro
 
     let rgb_buffer = bmp
         .pixels()
-        .into_iter()
-        .map(|pixel| [pixel.1.r(), pixel.1.g(), pixel.1.b()])
-        .flatten()
+        .flat_map(|pixel| [pixel.1.r(), pixel.1.g(), pixel.1.b()])
         .collect::<Vec<_>>();
 
     let image =
@@ -65,7 +63,7 @@ fn main() {
     let expr = cli.port.into();
     let rsc = rm.find_res(&expr).unwrap();
 
-    let mut instr: Instrument = rm
+    let instr: Instrument = rm
         .open(&rsc, AccessMode::NO_LOCK, TIMEOUT_INFINITE)
         .unwrap();
 
@@ -75,15 +73,15 @@ fn main() {
         ))
         .unwrap();
 
-    let result = tek_utils::query_str(&mut instr, "*IDN?").unwrap();
+    let result = tek_utils::query_str(&instr, "*IDN?").unwrap();
 
     print!("Instrument: {}", result);
 
-    tek_utils::write(&mut instr, "HARDCOPY:LAYOUT PORTRAIT").unwrap();
-    tek_utils::write(&mut instr, "HARDCOPY:PORT GPIB").unwrap();
-    tek_utils::write(&mut instr, "HARDCOPY:FORMAT RLE").unwrap();
+    tek_utils::write(&instr, "HARDCOPY:LAYOUT PORTRAIT").unwrap();
+    tek_utils::write(&instr, "HARDCOPY:PORT GPIB").unwrap();
+    tek_utils::write(&instr, "HARDCOPY:FORMAT RLE").unwrap();
 
-    let bin = tek_utils::query_bin(&mut instr, "HARDCOPY START").unwrap();
+    let bin = tek_utils::query_bin(&instr, "HARDCOPY START").unwrap();
 
     parse_broken_bmp(&bin).unwrap().save(&cli.output).unwrap();
 
