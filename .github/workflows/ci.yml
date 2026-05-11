@@ -40,6 +40,10 @@ jobs:
     needs: extract_latest_version_of_ni_toolchain
 
     steps:
+      - uses: actions/checkout@v6.0.2
+        with:
+          submodules: true
+
       - name: Install NI Visa
         run: |
           $env:NI_VER="${{ needs.extract_latest_version_of_ni_toolchain.outputs.version }}"
@@ -60,10 +64,6 @@ jobs:
 
             Start-Sleep -Seconds 1
           }
-
-      - uses: actions/checkout@v6.0.2
-        with:
-          submodules: true
 
       - uses: Swatinem/rust-cache@v2.9.1
         with:
