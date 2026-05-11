@@ -40,7 +40,7 @@ jobs:
     needs: extract_latest_version_of_ni_toolchain
 
     steps:
-      - name: Download NI Visa
+      - name: Install NI Visa
         run: |
           $env:NI_VER="${{ needs.extract_latest_version_of_ni_toolchain.outputs.version }}"
           $env:NI_EXE="ni-visa_$($env:NI_VER)_online.exe"
@@ -49,8 +49,8 @@ jobs:
           echo "Download $env:NI_EXE ($env:NI_VER) from $env:NI_URL"
           Invoke-WebRequest "$env:NI_URL" -OutFile "$env:NI_EXE"
 
-      - name: Install NI Visa
-        run: |
+          echo "Install $env:NI_EXE ($env:NI_VER) from $env:NI_URL"
+
           Start-Process -FilePath "$env:NI_EXE" -ArgumentList "--quiet", "--accept-eulas", "--prevent-reboot"
 
           while ($true) {
