@@ -447,9 +447,8 @@ dependencies = [
 
 [[package]]
 name = "tinybmp"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df43af2cb7b369009aa14144959bb4f2720ab62034c9073242f2d3a186c2edb6"
+version = "0.7.0"
+source = "git+https://github.com/yanorei32/tinybmp?rev=b2b853044d6cf74c11cd2e31d5603fff2b29fadf#b2b853044d6cf74c11cd2e31d5603fff2b29fadf"
 dependencies = [
  "embedded-graphics",
 ]

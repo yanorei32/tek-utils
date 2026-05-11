@@ -7,7 +7,7 @@ edition = "2024"
 clap = { version = "4.6.1", features = ["derive"] }
 embedded-graphics = "0.8.2"
 image = { version = "0.25.10", default-features = false, features = ["png"] }
-tinybmp = "0.6.0"
+tinybmp = { git = "https://github.com/yanorei32/tinybmp", rev = "b2b853044d6cf74c11cd2e31d5603fff2b29fadf" }
 visa-rs = "0.6.2"
 
 [[bin]]
