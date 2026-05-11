@@ -13,6 +13,110 @@ env:
   PROJ_NAME: tek-utils
 
 jobs:
+  extract_latest_version_of_ni_toolchain:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.extract_latest_version.outputs.version }}
+
+    steps:
+      - id: extract_latest_version
+        run: |
+          VERSION="$(
+            curl https://www.ni.com/ja/support/downloads/drivers/download.ni-visa.html |
+              grep -Po 'https://download.ni.com/support/nipkg/products/ni-v/ni-visa/.*?/offline/ni-visa_.*?_offline.iso' |
+              sort |
+              tail -n 1 |
+              sed 's_/_ _g' |
+              awk '{ print $8 }'
+          )"
+          echo "latest version: $VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+  release_windows:
+    permissions:
+      contents: write
+
+    runs-on: windows-2025
+    needs: extract_latest_version_of_ni_toolchain
+
+    steps:
+      - name: Download NI Visa
+        run: |
+          $env:NI_VER="${{ needs.extract_latest_version_of_ni_toolchain.outputs.version }}"
+          $env:NI_EXE="ni-visa_$($env:NI_VER)_online.exe"
+          $env:NI_URL="https://download.ni.com/support/nipkg/products/ni-v/ni-visa/$env:NI_VER/online/$env:NI_EXE"
+
+          echo "Download $env:NI_EXE ($env:NI_VER) from $env:NI_URL"
+          Invoke-WebRequest "$env:NI_URL" -OutFile "$env:NI_EXE"
+
+      - name: Install NI Visa
+        run: |
+          Start-Process -FilePath "$env:NI_EXE" -ArgumentList "--quiet", "--accept-eulas", "--prevent-reboot"
+
+          while ($true) {
+            if (Test-Path "C:\Windows\System32\visa32.dll") {
+              break
+            }
+
+            Start-Sleep -Seconds 1
+          }
+
+      - uses: actions/checkout@v6.0.2
+        with:
+          submodules: true
+
+      - uses: Swatinem/rust-cache@v2.9.1
+        with:
+          prefix-key: ${{ env.RUST_CACHE_VERSION }}-rust
+
+      - name: Build
+        run: |
+          cargo build --release
+
+      - name: Install cargo license
+        run: |
+          cargo install cargo-license
+
+      - name: Create CREDITS file
+        shell: C:\shells\gitbash.exe {0}
+        run: |
+          cargo license \
+            --authors \
+            --do-not-bundle \
+            --avoid-dev-deps \
+            --filter-platform "$(rustc -vV | sed -n 's|host: ||p')" \
+              > CREDITS
+
+      - name: Make release file
+        shell: C:\shells\gitbash.exe {0}
+        run: |
+          DIR_NAME="${{ env.PROJ_NAME }}-windows-x86_64-${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('master-{0}', github.sha) }}"
+          mkdir "$DIR_NAME"
+          cp ./target/release/tek-data.exe "$DIR_NAME/"
+          cp ./target/release/tek-hardcopy.exe "$DIR_NAME/"
+          cp ./LICENSE "$DIR_NAME/"
+          cp ./CREDITS "$DIR_NAME/"
+          cp ./README.md "$DIR_NAME/"
+          7z a "$DIR_NAME.zip" "$DIR_NAME/"
+
+      - name: pre-release
+        uses: softprops/action-gh-release@v3.0.0
+        if: "! startsWith(github.ref, 'refs/tags/')"
+        with:
+          tag_name: master-${{ github.sha }}
+          prerelease: true
+          fail_on_unmatched_files: true
+          files: |
+            *.zip
+
+      - name: tagged-release
+        uses: softprops/action-gh-release@v3.0.0
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          fail_on_unmatched_files: true
+          files: |
+            *.zip
+
   release_linux:
     continue-on-error: false
     strategy:
